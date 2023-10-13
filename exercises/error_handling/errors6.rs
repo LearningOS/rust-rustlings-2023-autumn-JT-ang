@@ -9,11 +9,10 @@
 // Execute `rustlings hint errors6` or use the `hint` watch subcommand for a
 // hint.
 
-// I AM NOT DONE
-
+use std::error;
+use std::fmt;
 use std::num::ParseIntError;
 
-// This is a custom error type that we will be using in `parse_pos_nonzero()`.
 #[derive(PartialEq, Debug)]
 enum ParsePosNonzeroError {
     Creation(CreationError),
@@ -24,18 +23,16 @@ impl ParsePosNonzeroError {
     fn from_creation(err: CreationError) -> ParsePosNonzeroError {
         ParsePosNonzeroError::Creation(err)
     }
-    // TODO: add another error conversion function here.
-    // fn from_parseint...
+
+    fn from_parseint(err: ParseIntError) -> ParsePosNonzeroError {
+        ParsePosNonzeroError::ParseInt(err)
+    }
 }
 
 fn parse_pos_nonzero(s: &str) -> Result<PositiveNonzeroInteger, ParsePosNonzeroError> {
-    // TODO: change this to return an appropriate error instead of panicking
-    // when `parse()` returns an error.
-    let x: i64 = s.parse().unwrap();
+    let x: i64 = s.parse().map_err(ParsePosNonzeroError::from_parseint)?;
     PositiveNonzeroInteger::new(x).map_err(ParsePosNonzeroError::from_creation)
 }
-
-// Don't change anything below this line.
 
 #[derive(PartialEq, Debug)]
 struct PositiveNonzeroInteger(u64);
@@ -56,13 +53,24 @@ impl PositiveNonzeroInteger {
     }
 }
 
+impl fmt::Display for CreationError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let description = match *self {
+            CreationError::Negative => "number is negative",
+            CreationError::Zero => "number is zero",
+        };
+        f.write_str(description)
+    }
+}
+
+impl error::Error for CreationError {}
+
 #[cfg(test)]
 mod test {
     use super::*;
 
     #[test]
     fn test_parse_error() {
-        // We can't construct a ParseIntError, so we have to pattern match.
         assert!(matches!(
             parse_pos_nonzero("not a number"),
             Err(ParsePosNonzeroError::ParseInt(_))
