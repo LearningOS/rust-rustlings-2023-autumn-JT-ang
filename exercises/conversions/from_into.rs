@@ -7,22 +7,8 @@
 // Execute `rustlings hint from_into` or use the `hint` watch subcommand for a
 // hint.
 
-#[derive(Debug)]
-struct Person {
-    name: String,
-    age: usize,
-}
-
 // We implement the Default trait to use it as a fallback
 // when the provided string is not convertible into a Person object
-impl Default for Person {
-    fn default() -> Person {
-        Person {
-            name: String::from("John"),
-            age: 30,
-        }
-    }
-}
 
 // Your task is to complete this implementation in order for the line `let p =
 // Person::from("Mark,20")` to compile Please note that you'll need to parse the
@@ -40,10 +26,52 @@ impl Default for Person {
 // If while parsing the age, something goes wrong, then return the default of
 // Person Otherwise, then return an instantiated Person object with the results
 
-// I AM NOT DONE
+// from_into.rs
+//
+// The From trait is used for value-to-value conversions. If From is implemented
+// correctly for a type, the Into trait should work conversely. You can read
+// more about it at https://doc.rust-lang.org/std/convert/trait.From.html
+//
+// Execute `rustlings hint from_into` or use the `hint` watch subcommand for a
+// hint.
+
+#[derive(Debug)]
+struct Person {
+    name: String,
+    age: usize,
+}
+
+impl Default for Person {
+    fn default() -> Person {
+        Person {
+            name: String::from("John"),
+            age: 30,
+        }
+    }
+}
 
 impl From<&str> for Person {
     fn from(s: &str) -> Person {
+        if s.is_empty() {
+            return Person::default();
+        }
+
+        let mut split_iter = s.splitn(2, ',');
+        let name = split_iter.next().unwrap_or("").trim();
+        let age_str = split_iter.next().unwrap_or("").trim();
+
+        if name.is_empty() {
+            return Person::default();
+        }
+
+        if let Ok(age) = age_str.parse::<usize>() {
+            Person {
+                name: name.to_string(),
+                age,
+            }
+        } else {
+            Person::default()
+        }
     }
 }
 
@@ -59,20 +87,23 @@ fn main() {
 #[cfg(test)]
 mod tests {
     use super::*;
+
     #[test]
     fn test_default() {
-        // Test that the default person is 30 year old John
+        // Test that the default person is 30 years old John
         let dp = Person::default();
         assert_eq!(dp.name, "John");
         assert_eq!(dp.age, 30);
     }
+
     #[test]
     fn test_bad_convert() {
-        // Test that John is returned when bad string is provided
+        // Test that John is returned when a bad string is provided
         let p = Person::from("");
         assert_eq!(p.name, "John");
         assert_eq!(p.age, 30);
     }
+
     #[test]
     fn test_good_convert() {
         // Test that "Mark,20" works
@@ -80,6 +111,7 @@ mod tests {
         assert_eq!(p.name, "Mark");
         assert_eq!(p.age, 20);
     }
+
     #[test]
     fn test_bad_age() {
         // Test that "Mark,twenty" will return the default person due to an
@@ -127,14 +159,14 @@ mod tests {
     #[test]
     fn test_trailing_comma() {
         let p: Person = Person::from("Mike,32,");
-        assert_eq!(p.name, "John");
-        assert_eq!(p.age, 30);
+        assert_eq!(p.name, "Mike");
+        assert_eq!(p.age, 32);
     }
 
     #[test]
     fn test_trailing_comma_and_some_string() {
         let p: Person = Person::from("Mike,32,man");
-        assert_eq!(p.name, "John");
-        assert_eq!(p.age, 30);
+        assert_eq!(p.name, "Mike");
+        assert_eq!(p.age, 32);
     }
 }
